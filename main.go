@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"net/http"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -20,5 +20,24 @@ func main() {
 		return c.SendString(fmt.Sprintf("Hello, %s!", name))
 	})
 
-	log.Fatal(app.Listen(":3000"))
+	app.Post("/hello-person", func(c *fiber.Ctx) error {
+		person := new(Person)
+		if err := c.BodyParser(person); err == nil {
+			return c.Status(http.StatusBadRequest).SendString("invalid json")
+		}
+
+		return c.SendString(fmt.Sprintf("%s, %d", person.FullName(), person.Age))
+	})
+
+	app.Listen(":3000")
+}
+
+type Person struct {
+	Name     string `json: "name"`
+	LastName string `json: "name"`
+	Age      int8   `json: "age"`
+}
+
+func (p *Person) FullName() string {
+	return fmt.Sprintf("%s %s", p.Name, p.LastName)
 }
